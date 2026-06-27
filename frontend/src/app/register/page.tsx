@@ -1,0 +1,118 @@
+'use client';
+
+import { useState } from 'react';
+import { authAPI } from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
+import { useRouter } from 'next/navigation';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+
+export default function Register() {
+  const router = useRouter();
+  const { setAuth } = useAuthStore();
+
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      setLoading(true);
+      const response = await authAPI.register({
+        email,
+        username,
+        password,
+        displayName: displayName || username,
+      });
+      setAuth(response.data.user, response.data.token);
+      router.push('/');
+    } catch (error: any) {
+      setError(error.response?.data?.error || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-secondary">
+      <div className="w-full max-w-md p-8 space-y-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-primary mb-2">Music Stream</h1>
+          <p className="text-gray-400">Create your account</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">Email</label>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">Username</label>
+            <Input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Choose a username"
+              required
+              minLength={3}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">Display Name</label>
+            <Input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Your display name (optional)"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">Password</label>
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Create a password"
+              required
+              minLength={6}
+            />
+          </div>
+
+          {error && (
+            <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded">
+              {error}
+            </div>
+          )}
+
+          <Button type="submit" disabled={loading} className="w-full">
+            {loading ? 'Creating account...' : 'Sign Up'}
+          </Button>
+        </form>
+
+        <div className="text-center text-gray-400">
+          <p>
+            Already have an account?{' '}
+            <a href="/login" className="text-primary hover:underline">
+              Sign in
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
